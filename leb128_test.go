@@ -21,4 +21,11 @@ func TestUnsignedDecode(t *testing.T) {
 func TestSignedEncode(t *testing.T) {
 	assert.Equal(t, []byte{0xC0, 0xBB, 0x78}, SignedEncode(-123456))
 	assert.Equal(t, []byte{0x9B, 0xF1, 0x59}, SignedEncode(-624485))
+	assert.Equal(t, []byte{0x80, 0x80, 0x80, 0xFD, 0x07}, SignedEncode(2141192192))
+}
+
+func TestSignedDecode(t *testing.T) {
+	assert.Equal(t, int64(-123456), SignedDecode([]byte{0xC0, 0xBB, 0x78}))
+	assert.Equal(t, int64(-624485), SignedDecode([]byte{0x9B, 0xF1, 0x59}))
+	assert.Equal(t, int64(2141192192), SignedDecode([]byte{0x80, 0x80, 0x80, 0xFD, 0x07}))
 }

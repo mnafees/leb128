@@ -1,11 +1,17 @@
 package leb128
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // Based on the explanation here: https://en.wikipedia.org/wiki/LEB128.
 
 // UnsignedEncode encodes an uint64 to LEB128 encoded byte array
 func UnsignedEncode(value uint64) []byte {
+	if value == 0 {
+		return []byte{0x00}
+	}
+
 	var enc []byte
 	for value > 0 {
 		bits := byte(value & 0x7F)
@@ -22,6 +28,10 @@ func UnsignedEncode(value uint64) []byte {
 func UnsignedDecode(enc []byte) uint64 {
 	if len(enc) > 8 {
 		panic("Error decoding byte array. Cannot fit in uint64.")
+	}
+
+	if len(enc) == 1 && enc[0] == 0x00 {
+		return 0
 	}
 
 	var dec uint64
@@ -67,5 +77,22 @@ func SignedEncode(value int64) []byte {
 
 // SignedDecode decodes a LEB128 encoded byte array back to int64
 func SignedDecode(enc []byte) int64 {
-	panic("Not implemented yet")
+	if len(enc) > 8 {
+		panic("Error decoding byte array. Cannot fit in int64.")
+	}
+
+	if enc[len(enc)-1]&0x40 != 0x40 {
+		return int64(UnsignedDecode(enc))
+	}
+
+	var dec uint64
+	for i := len(enc) - 1; i >= 0; i-- {
+		bits := enc[i] & 0x7F
+		dec = (dec << 7) | uint64(bits)
+	}
+	bitLength := bits.Len64(dec)
+	dec = ^dec
+	dec = (dec << (64 - bitLength)) >> (64 - bitLength)
+	dec++
+	return int64(-dec)
 }
